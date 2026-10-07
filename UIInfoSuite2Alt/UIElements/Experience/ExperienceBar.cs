@@ -55,10 +55,7 @@ public partial class ExperienceBar : IDisposable
 
   private static readonly Dictionary<SkillType, Color> ExperienceFillColor = new()
   {
-    // NOTE: components must be 0-1 floats. The previous (int, int, int, float) form bound to
-    // the all-float constructor, clamping every channel above 1 to 255 — most skills rendered
-    // white, Combat pink (its green channel was zero), only Foraging kept its intended green.
-    [SkillType.Farming] = new Color(255 / 255f, 251 / 255f, 35 / 255f, 0.38f),
+    [SkillType.Farming] = new Color(255 / 255f, 251 / 255f, 35 / 255f, 0.63f),
     [SkillType.Fishing] = new Color(17 / 255f, 84 / 255f, 252 / 255f, 0.63f),
     [SkillType.Foraging] = new Color(0, 234 / 255f, 0, 0.63f),
     [SkillType.Mining] = new Color(101 / 255f, 67 / 255f, 33 / 255f, 0.63f),
