@@ -573,13 +573,10 @@ public partial class ExperienceBar : IDisposable
     // Mastery experience bar when skill is maxed and all skills meet the required level
     _isMasteryActive.Value = false;
     int masteryMinLevel = _vppApi?.MasteryCaveChanges ?? 10;
-    if (
-      _experienceRequiredToLevel.Value <= 0
-      && _currentSkillLevel.Value >= masteryMinLevel
-      && IsMasteryUnlocked()
-    )
+    bool masteryUnlocked = _currentSkillLevel.Value >= masteryMinLevel && IsMasteryUnlocked();
+    int currentMasteryLevel = MasteryTrackerMenu.getCurrentMasteryLevel();
+    if (_experienceRequiredToLevel.Value <= 0 && masteryUnlocked)
     {
-      int currentMasteryLevel = MasteryTrackerMenu.getCurrentMasteryLevel();
       if (currentMasteryLevel < 5)
       {
         _isMasteryActive.Value = true;
@@ -595,6 +592,18 @@ public partial class ExperienceBar : IDisposable
           (int)Game1.stats.Get("MasteryExp") - _experienceFromPreviousLevels.Value;
         _currentSkillLevel.Value = currentMasteryLevel;
       }
+    }
+    else if (masteryUnlocked && currentMasteryLevel < 5)
+    {
+      // Extended levels (e.g. Skill Overhaul): the skill still has levels to gain, so
+      // show mastery progress as a stacked secondary bar instead of replacing the skill bar
+      AddOrUpdateMasterySecondaryBar(currentMasteryLevel);
+    }
+
+    if (_isMasteryActive.Value)
+    {
+      // Mastery took over the primary bar; don't also stack it as a secondary
+      RemoveMasterySecondaryBar();
     }
 
     // Reset combo when the displayed skill changes.
@@ -865,6 +874,51 @@ public partial class ExperienceBar : IDisposable
     _currentCustomLevels.Value[skillId] = currentLevel;
   }
 
+  /// <summary>Shows mastery progress as a stacked secondary bar while the gaining skill still has extended levels left.</summary>
+  private void AddOrUpdateMasterySecondaryBar(int currentMasteryLevel)
+  {
+    ExperienceBarState? existing = null;
+    foreach (ExperienceBarState bar in _secondaryBars.Value)
+    {
+      if (bar.IsMastery)
+      {
+        existing = bar;
+        break;
+      }
+    }
+
+    if (existing == null)
+    {
+      existing = new ExperienceBarState();
+      _secondaryBars.Value.Add(existing);
+    }
+
+    int xpForCurrentLevel = MasteryTrackerMenu.getMasteryExpNeededForLevel(currentMasteryLevel);
+    int xpForNextLevel = MasteryTrackerMenu.getMasteryExpNeededForLevel(currentMasteryLevel + 1);
+    int currentMasteryXp = (int)Game1.stats.Get("MasteryExp");
+
+    existing.FillColor = MasteryFillColor;
+    existing.IconRectangle = MasteryIconRectangle;
+    existing.IconTexture = Game1.mouseCursors_1_6;
+    existing.EarnedThisLevel = currentMasteryXp - xpForCurrentLevel;
+    existing.DifferenceBetweenLevels = xpForNextLevel - xpForCurrentLevel;
+    existing.SkillLevel = currentMasteryLevel;
+    existing.IsMastery = true;
+    existing.IconScale = 29f / 11f;
+    existing.VisibleTimer = ExperienceBarVisibleTicks;
+  }
+
+  private void RemoveMasterySecondaryBar()
+  {
+    for (int i = _secondaryBars.Value.Count - 1; i >= 0; --i)
+    {
+      if (_secondaryBars.Value[i].IsMastery)
+      {
+        _secondaryBars.Value.RemoveAt(i);
+      }
+    }
+  }
+
   private bool IsMasteryUnlocked()
   {
     int maxLevel = _vppApi?.MasteryCaveChanges ?? 10;
@@ -895,6 +949,13 @@ public partial class ExperienceBar : IDisposable
 
   private int GetExperienceRequiredToLevel(int currentLevel)
   {
+    // Skill Overhaul replaces the whole curve (levels 1-20) while it is loaded
+    int skillOverhaulXp = SkillOverhaulHelper.GetExperienceRequiredToLevel(currentLevel);
+    if (skillOverhaulXp > 0)
+    {
+      return skillOverhaulXp;
+    }
+
     return currentLevel switch
     {
       0 => 100,

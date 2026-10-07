@@ -31,6 +31,7 @@ public static class ModCompat
   public const string ArchaeologySkill = "moonslime.ArchaeologySkill";
   public const string BetterJunimos = "hawkfalcon.BetterJunimos";
   public const string WalkOfLife = "DaLion.Professions";
+  public const string SkillOverhaul = "TingXueMian.SkillOverhaul";
   public const string ExtraMachineConfig = "selph.ExtraMachineConfig";
   public const string CarpentersApprentice = "Juanpa98ar.Code.CarpentersApprentice";
   public const string AnimalHusbandry = "DIGUS.ANIMALHUSBANDRYMOD";

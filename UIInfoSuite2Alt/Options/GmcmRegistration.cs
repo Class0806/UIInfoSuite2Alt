@@ -30,6 +30,8 @@ public partial class ModEntry
     ApiManager.TryRegisterApi<IExtraMachineConfigApi>(Helper, ModCompat.ExtraMachineConfig);
 
     WalkOfLifeHelper.Initialize(Helper);
+    SkillOverhaulHelper.Initialize(Helper);
+
     FerngillEconomyHelper.Initialize(Helper);
 
     UnlockableBundleHelper.Initialize(Helper);
